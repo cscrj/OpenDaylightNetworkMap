@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1402321230211
+Build-Jdk: 1.7.0_55
+Built-By: chris
+Bundle-Activator: org.opendaylight.controller.networkMap.Activator
+Bundle-ManifestVersion: 2
+Bundle-Name: org.opendaylight.controller.networkMap
+Bundle-SymbolicName: org.opendaylight.controller.org.opendaylight.contro
+ ller.networkMap
+Bundle-Version: 0.1.0
+Created-By: Apache Maven Bundle Plugin
+Export-Package: org.opendaylight.controller.networkMap;uses:="org.openda
+ ylight.controller.sal.core,org.apache.felix.dm,org.opendaylight.control
+ ler.switchmanager,org.opendaylight.controller.sal.packet,org.slf4j,org.
+ opendaylight.controller.sal.utils";version="0.1.0"
+Import-Package: org.apache.felix.dm;version="[3.0,4)",org.opendaylight.c
+ ontroller.sal.core;version="[0.8,1)",org.opendaylight.controller.sal.pa
+ cket;version="[0.8,1)",org.opendaylight.controller.sal.utils;version="[
+ 0.8,1)",org.opendaylight.controller.switchmanager;version="[0.7,1)",org
+ .slf4j;version="[1.7,2)"
+Tool: Bnd-1.50.0

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="5.6">
+<file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkMap/Activator.java">
+</file>
+<file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkMap/NetworkMap.java">
+</file>
+<file name="/home/chris/openDaylight/networkMap/pom.xml">
+</file>
+</checkstyle>
