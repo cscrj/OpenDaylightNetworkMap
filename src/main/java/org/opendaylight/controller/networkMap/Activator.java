@@ -7,6 +7,7 @@ import org.apache.felix.dm.Component;
 import org.opendaylight.controller.sal.core.ComponentActivatorAbstractBase;
 import org.opendaylight.controller.sal.core.IContainer;
 import org.opendaylight.controller.sal.packet.IDataPacketService;
+import org.opendaylight.controller.sal.packet.IListenDataPacket;
 //import org.opendaylight.controller.protocol_plugin.openflow.ITopologyServiceShimListener;
 //import org.opendaylight.controller.protocol_plugin.openflow.core.ISwitchStateListener;
 import org.opendaylight.controller.switchmanager.IInventoryListener;
@@ -38,7 +39,8 @@ public class Activator extends ComponentActivatorAbstractBase {
                                           // name using salListenerName
                                           // property
 
-            c.setInterface(new String[] { IInventoryListener.class.getName() },
+            c.setInterface(new String[] { IInventoryListener.class.getName(),
+                    IListenDataPacket.class.getName() },
                     inventoryServiceProperties);
 
             /*

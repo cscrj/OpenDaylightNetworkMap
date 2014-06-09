@@ -74,7 +74,6 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             switch (type) {
             case ADDED:
                 _nodeData.put(nodeId, node);
-                // NodeDescription nodeData = readDescription(node,true);
                 break;
             case CHANGED:
                 break;
