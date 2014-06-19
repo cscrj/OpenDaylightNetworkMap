@@ -3,6 +3,7 @@ package org.opendaylight.controller.networkMap;
 // OpenDaylight imports
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -12,12 +13,14 @@ import org.opendaylight.controller.sal.core.Node.NodeIDType;
 import org.opendaylight.controller.sal.core.NodeConnector;
 import org.opendaylight.controller.sal.core.Property;
 import org.opendaylight.controller.sal.core.UpdateType;
+import org.opendaylight.controller.sal.inventory.IPluginInInventoryService;
 import org.opendaylight.controller.sal.packet.Ethernet;
 import org.opendaylight.controller.sal.packet.IDataPacketService;
 import org.opendaylight.controller.sal.packet.IListenDataPacket;
 import org.opendaylight.controller.sal.packet.IPv4;
 import org.opendaylight.controller.sal.packet.PacketResult;
 import org.opendaylight.controller.sal.packet.RawPacket;
+import org.opendaylight.controller.sal.reader.IPluginInReadService;
 import org.opendaylight.controller.sal.utils.ServiceHelper;
 import org.opendaylight.controller.switchmanager.IInventoryListener;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
@@ -37,11 +40,18 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
      * Unneeded because Node implements ToString() to create a unique identifier
      * for each node
      */
+    private IPluginInInventoryService _openFlowInventory;
+    private ConcurrentMap<Node, Map<String, Property>> _openFlowNodeProperties;
+
+    private IPluginInReadService _openFlowReadService; // we want
+                                                       // readDescription()
     private IDataPacketService _dataPacketService; // for packet decoding and
     // inspection
-    private IContainer _container;
-    private ISwitchManager _switchManager;
+    private IContainer _container; // reference container so we can access
+                                   // managers above SAL
+    private ISwitchManager _switchManager; // reference for the switch manager
 
+    private ConcurrentHashMap<String, Map<String, Property>> _nodeProperties = new ConcurrentHashMap<String, Map<String, Property>>();
     private ConcurrentHashMap<String, Node> _nodeData = new ConcurrentHashMap<String, Node>(); // properties
     // of
     // network
@@ -52,17 +62,55 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
     private static final Logger log = LoggerFactory.getLogger(NetworkMap.class); // log
                                                                                  // actions
 
-    private void AccessSwitchManager() {
+    /* Function called once the bundle is loaded into the OSGI registry */
+    /* Let's get references to all the services we need */
+    void started() {
+
+        _openFlowInventory = (IPluginInInventoryService) ServiceHelper
+                .getInstance(IPluginInInventoryService.class,
+                        _container.getName(), this);
+
+        _openFlowNodeProperties = _openFlowInventory.getNodeProps();
+
+        _openFlowReadService = (IPluginInReadService) ServiceHelper
+                .getInstance(IPluginInReadService.class, _container.getName(),
+                        this);
+
         _switchManager = (ISwitchManager) ServiceHelper.getInstance(
                 ISwitchManager.class, _container.getName(), this);
 
-        List<Switch> switchUpdate = _switchManager.getNetworkDevices();
+        List<Switch> switchUpdate = _switchManager.getNetworkDevices(); // get
+                                                                        // existing
+                                                                        // devices
+
+        // TODO:Get information existing nodes and node connectors, lest this
+        // package be started after the networks
+        Set<Node> nodes = _switchManager.getNodes();
+    }
+
+    /* When loaded out of OSGI registry */
+    void stopped() {
 
     }
 
     /* Called on update to node inventory */
     public void notifyNode(Node node, UpdateType type,
             Map<String, Property> propMap) {
+
+        if (_switchManager == null) {
+            log.trace("No switch manager to retrieve properties!");
+            return;
+        }
+
+        if (_openFlowReadService == null) {
+            log.trace("No OpenFlow Reader service attached!");
+            return;
+        }
+
+        if (_openFlowInventory == null) {
+            log.trace("No OpenFlow Inventory service attached!");
+            return;
+        }
 
         log.trace("Received implementation agnostic node update");
 
@@ -74,6 +122,9 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             switch (type) {
             case ADDED:
                 _nodeData.put(nodeId, node);
+                //_nodeProperties.put(nodeId, _switchManager.getNodeProps(node));
+                Map<String, Property> propsMap = _nodeProperties.get(arg0)
+
                 break;
             case CHANGED:
                 break;
@@ -84,12 +135,12 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
                 log.trace("Uknown notifyNode update type: '" + type.toString()
                         + "'");
                 break;
-
             }
-
         }
 
-        this.AccessSwitchManager();
+        // this.AccessSwitchManager(); // call method to test access to
+        // container
+        // and managers
 
         // if nodetype = switch and openflow then stuff
     }
@@ -100,7 +151,6 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
 
         log.trace("Received implementation agnostic  connector update");
         String updateConnectorId = nodeConnector.toString();
-
     }
 
     @Override
@@ -112,7 +162,7 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
         log.trace("Received data packet of ", inPkt.getPacketData().length,
                 " bytes");
 
-        Ethernet decodedPkt = (Ethernet) this._dataPacketService
+        Ethernet decodedPkt = (Ethernet) _dataPacketService
                 .decodeDataPacket(inPkt);
         IPv4 ipv4Hdr = (IPv4) decodedPkt.getPayload();
 
@@ -126,12 +176,12 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
      * SAL
      */
     void setDataPacketService(IDataPacketService s) {
-        this._dataPacketService = s;
+        _dataPacketService = s;
     }
 
     void unsetDataPacketService(IDataPacketService s) {
-        if (this._dataPacketService == s) {
-            this._dataPacketService = null;
+        if (_dataPacketService == s) {
+            _dataPacketService = null;
         }
     }
 
@@ -144,8 +194,8 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
     }
 
     public void unsetIContainer(IContainer s) {
-        if (this._container == s) {
-            this._container = null;
+        if (_container == s) {
+            _container = null;
         }
     }
 }
