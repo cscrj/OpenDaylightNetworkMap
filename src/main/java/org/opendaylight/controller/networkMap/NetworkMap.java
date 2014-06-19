@@ -1,5 +1,6 @@
 package org.opendaylight.controller.networkMap;
 
+//TODO: Use jaxb for easy xml
 // OpenDaylight imports
 import java.util.List;
 import java.util.Map;
@@ -122,8 +123,21 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             switch (type) {
             case ADDED:
                 _nodeData.put(nodeId, node);
-                //_nodeProperties.put(nodeId, _switchManager.getNodeProps(node));
-                Map<String, Property> propsMap = _nodeProperties.get(arg0)
+
+                // get the switch properties for a particular node, subset of OF
+                // properties included
+                Map<String, Property> switchProps = _switchManager
+                        .getNodeProps(node);
+
+                _nodeProperties.put(nodeId, switchProps);
+
+                // update properties for all nodes using OF Inventory
+                // _openFlowNodeProperties = _openFlowInventory.getNodeProps();
+
+                // Map<String, Property> propsMap = _nodeProperties
+                // .get("capabilities");
+
+                log.trace("Added a new node : " + nodeId);
 
                 break;
             case CHANGED:
@@ -138,11 +152,6 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             }
         }
 
-        // this.AccessSwitchManager(); // call method to test access to
-        // container
-        // and managers
-
-        // if nodetype = switch and openflow then stuff
     }
 
     /* Called on update to nodeConnector (port) inventory */
