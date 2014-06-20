@@ -2,12 +2,12 @@ package org.opendaylight.controller.networkMap;
 
 //TODO: Use jaxb for easy xml
 // OpenDaylight imports
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.opendaylight.controller.networkComponents.OFSwitch;
 import org.opendaylight.controller.sal.core.IContainer;
 import org.opendaylight.controller.sal.core.Node;
 import org.opendaylight.controller.sal.core.Node.NodeIDType;
@@ -25,7 +25,6 @@ import org.opendaylight.controller.sal.reader.IPluginInReadService;
 import org.opendaylight.controller.sal.utils.ServiceHelper;
 import org.opendaylight.controller.switchmanager.IInventoryListener;
 import org.opendaylight.controller.switchmanager.ISwitchManager;
-import org.opendaylight.controller.switchmanager.Switch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,31 +36,19 @@ import org.slf4j.LoggerFactory;
 
 public class NetworkMap implements IInventoryListener, IListenDataPacket {
 
-    /*
-     * Unneeded because Node implements ToString() to create a unique identifier
-     * for each node
-     */
-    private IPluginInInventoryService _openFlowInventory;
-    private ConcurrentMap<Node, Map<String, Property>> _openFlowNodeProperties;
+    // Our own hashmap of nodes using our own switch class
+    private ConcurrentHashMap<String, OFSwitch> _networkNodes;
 
-    private IPluginInReadService _openFlowReadService; // we want
-                                                       // readDescription()
-    private IDataPacketService _dataPacketService; // for packet decoding and
-    // inspection
-    private IContainer _container; // reference container so we can access
-                                   // managers above SAL
-    private ISwitchManager _switchManager; // reference for the switch manager
-
-    private ConcurrentHashMap<String, Map<String, Property>> _nodeProperties = new ConcurrentHashMap<String, Map<String, Property>>();
-    private ConcurrentHashMap<String, Node> _nodeData = new ConcurrentHashMap<String, Node>(); // properties
-    // of
-    // network
-    // nodes, we'll only keep
-    // switches
+    private IPluginInInventoryService _openFlowInventory; // complete inventory
+    private IPluginInReadService _openFlowReadService; // provides OF statistics
+                                                       // access
+    private IDataPacketService _dataPacketService; // intercept packets above
+                                                   // SAL
+    private IContainer _container; // container reference for service access
+    private ISwitchManager _switchManager; // access switch and port details
 
     private ConcurrentMap<String, NodeConnector> _connectorData;
-    private static final Logger log = LoggerFactory.getLogger(NetworkMap.class); // log
-                                                                                 // actions
+    private static final Logger log = LoggerFactory.getLogger(NetworkMap.class);
 
     /* Function called once the bundle is loaded into the OSGI registry */
     /* Let's get references to all the services we need */
@@ -71,18 +58,12 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
                 .getInstance(IPluginInInventoryService.class,
                         _container.getName(), this);
 
-        _openFlowNodeProperties = _openFlowInventory.getNodeProps();
-
         _openFlowReadService = (IPluginInReadService) ServiceHelper
                 .getInstance(IPluginInReadService.class, _container.getName(),
                         this);
 
         _switchManager = (ISwitchManager) ServiceHelper.getInstance(
                 ISwitchManager.class, _container.getName(), this);
-
-        List<Switch> switchUpdate = _switchManager.getNetworkDevices(); // get
-                                                                        // existing
-                                                                        // devices
 
         // TODO:Get information existing nodes and node connectors, lest this
         // package be started after the networks
@@ -122,21 +103,11 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
 
             switch (type) {
             case ADDED:
-                _nodeData.put(nodeId, node);
 
-                // get the switch properties for a particular node, subset of OF
-                // properties included
-                Map<String, Property> switchProps = _switchManager
-                        .getNodeProps(node);
-
-                _nodeProperties.put(nodeId, switchProps);
-
-                // update properties for all nodes using OF Inventory
-                // _openFlowNodeProperties = _openFlowInventory.getNodeProps();
-
-                // Map<String, Property> propsMap = _nodeProperties
-                // .get("capabilities");
-
+                Map<String, Property> switchProps = GetSingleNodeProps(node);
+                OFSwitch newSwitch = new OFSwitch(nodeId);
+                newSwitch.MapSwitchProperties(switchProps);
+                _networkNodes.put(nodeId, newSwitch);
                 log.trace("Added a new node : " + nodeId);
 
                 break;
@@ -178,6 +149,19 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
         byte[] payload = ipv4Hdr.getRawPayload();
 
         return null;
+    }
+
+    /* Get the properties of a single node */
+    Map<String, Property> GetSingleNodeProps(Node node) {
+
+        return (_switchManager == null) ? null : _switchManager
+                .getNodeProps(node);
+    }
+
+    /* Get the properties for all nodes */
+    private ConcurrentMap<Node, Map<String, Property>> GetAllNodeProps() {
+        return (_openFlowInventory == null) ? null : _openFlowInventory
+                .getNodeProps();
     }
 
     /*
