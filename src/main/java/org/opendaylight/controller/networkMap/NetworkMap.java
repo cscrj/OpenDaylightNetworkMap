@@ -158,8 +158,11 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
         for (NodeConnector connector : connectors) {
             Map<String, Property> portProps = _switchManager
                     .getNodeConnectorProps(connector);
-            Propert a = portProps.get)
+
+            newSwitch.AddPort(connector.getNodeConnectorIDString(), portProps);
+
         }
+        log.trace("Added connectors");
 
     }
 

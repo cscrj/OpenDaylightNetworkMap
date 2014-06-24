@@ -2,11 +2,15 @@
 <checkstyle version="5.7">
 <file name="/home/chris/openDaylight/networkMap/src/main/java/io/FeaturesReply.java">
 </file>
+<file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkMap/Helpers.java">
+</file>
 <file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkMap/Activator.java">
 </file>
 <file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkMap/NetworkMap.java">
 </file>
 <file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkComponents/OFSwitch.java">
+</file>
+<file name="/home/chris/openDaylight/networkMap/src/main/java/org/opendaylight/controller/networkComponents/OFPort.java">
 </file>
 <file name="/home/chris/openDaylight/networkMap/pom.xml">
 </file>
