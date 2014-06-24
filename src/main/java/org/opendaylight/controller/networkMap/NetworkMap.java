@@ -37,14 +37,12 @@ import org.slf4j.LoggerFactory;
 public class NetworkMap implements IInventoryListener, IListenDataPacket {
 
     // Our own hashmap of nodes using our own switch class
-    private ConcurrentHashMap<String, OFSwitch> _networkNodes;
+    private ConcurrentHashMap<String, OFSwitch> _networkSwitches;
 
     private IPluginInInventoryService _openFlowInventory; // complete inventory
-    private IPluginInReadService _openFlowReadService; // provides OF statistics
-                                                       // access
-    private IDataPacketService _dataPacketService; // intercept packets above
-                                                   // SAL
-    private IContainer _container; // container reference for service access
+    private IPluginInReadService _openFlowReadService; // provides OF stats
+    private IDataPacketService _dataPacketService; // packets above SAL
+    private IContainer _container; // container reference for manager access
     private ISwitchManager _switchManager; // access switch and port details
 
     private ConcurrentMap<String, NodeConnector> _connectorData;
@@ -65,9 +63,20 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
         _switchManager = (ISwitchManager) ServiceHelper.getInstance(
                 ISwitchManager.class, _container.getName(), this);
 
-        // TODO:Get information existing nodes and node connectors, lest this
-        // package be started after the networks
-        Set<Node> nodes = _switchManager.getNodes();
+        _networkSwitches = new ConcurrentHashMap<String, OFSwitch>();
+        /*
+         * Get nodes that already exist, retrieve properties, add OFSwitch to
+         * local map
+         */
+        ConcurrentMap<Node, Map<String, Property>> allNodeProps = _openFlowInventory
+                .getNodeProps();
+
+        for (Node n : allNodeProps.keySet()) {
+            AddSwitch(n);
+        }
+
+        // TODO: existing nodeConnectors
+
     }
 
     /* When loaded out of OSGI registry */
@@ -80,7 +89,7 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             Map<String, Property> propMap) {
 
         if (_switchManager == null) {
-            log.trace("No switch manager to retrieve properties!");
+            log.trace("No switch manager service attached!");
             return;
         }
 
@@ -99,21 +108,30 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
         if (node.getType() == NodeIDType.OPENFLOW)// we care only for openflow
                                                   // nodes
         {
-            String nodeId = node.toString(); // key for hashmap
+            String nodeId = node.getNodeIDString();
 
             switch (type) {
+            /*
+             * Get switch properties, create an instance of OFSwitch add to our
+             * hashmap
+             */
             case ADDED:
-
-                Map<String, Property> switchProps = GetSingleNodeProps(node);
-                OFSwitch newSwitch = new OFSwitch(nodeId);
-                newSwitch.MapSwitchProperties(switchProps);
-                _networkNodes.put(nodeId, newSwitch);
-                log.trace("Added a new node : " + nodeId);
-
+                this.AddSwitch(node);
+                log.trace("Added a new switch : " + nodeId);
                 break;
+
+            /* Look up the switch in our map and update the properties */
             case CHANGED:
+                this.UpdateSwitch(node);
+                log.trace("Update switch : " + nodeId);
                 break;
+
+            /* Remove the switch from our map */
             case REMOVED:
+                _networkSwitches.remove(nodeId);
+                log.trace("Removed switch : " + nodeId);
+                // TODO:Handle switch doesn't exist, possibly mishandled "ADDED"
+                // message earlier
                 break;
 
             default:
@@ -123,6 +141,31 @@ public class NetworkMap implements IInventoryListener, IListenDataPacket {
             }
         }
 
+    }
+
+    // add switch to local map, get it's properties and ports
+    private void AddSwitch(Node node) {
+        String nodeId = node.toString();
+        Map<String, Property> switchProps = GetSingleNodeProps(node);
+        OFSwitch newSwitch = new OFSwitch(nodeId);
+        newSwitch.MapSwitchProperties(switchProps);
+        _networkSwitches.put(nodeId, newSwitch);
+
+        // TODO: Handle switch already exsists, possible duplicate
+        // nodeId
+        Set<NodeConnector> connectors = _switchManager.getNodeConnectors(node);
+
+        for (NodeConnector connector : connectors) {
+            Map<String, Property> portProps = _switchManager
+                    .getNodeConnectorProps(connector);
+            Propert a = portProps.get)
+        }
+
+    }
+
+    private void UpdateSwitch(Node node) {
+        OFSwitch updatedSwitch = _networkSwitches.get(node.getNodeIDString());
+        updatedSwitch.MapSwitchProperties(GetSingleNodeProps(node));
     }
 
     /* Called on update to nodeConnector (port) inventory */
