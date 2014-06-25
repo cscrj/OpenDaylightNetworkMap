@@ -8,6 +8,7 @@ import org.opendaylight.controller.sal.core.ComponentActivatorAbstractBase;
 import org.opendaylight.controller.sal.core.IContainer;
 import org.opendaylight.controller.sal.packet.IDataPacketService;
 import org.opendaylight.controller.sal.packet.IListenDataPacket;
+import org.opendaylight.controller.sal.topology.IListenTopoUpdates;
 //import org.opendaylight.controller.protocol_plugin.openflow.ITopologyServiceShimListener;
 //import org.opendaylight.controller.protocol_plugin.openflow.core.ISwitchStateListener;
 import org.opendaylight.controller.switchmanager.IInventoryListener;
@@ -31,16 +32,16 @@ public class Activator extends ComponentActivatorAbstractBase {
         log.trace("Configuring NetworkMap instance");
 
         if (imp.equals(NetworkMap.class)) {
-            // Define exported and used services for NetworkMap component
 
+            // set name property for when class is registered in SAL
             Dictionary<String, Object> inventoryServiceProperties = new Hashtable<String, Object>();
-            inventoryServiceProperties.put("salListenerName",
-                    "myNetworkListener"); // give our topologyShimSistener a
-                                          // name using salListenerName
-                                          // property
+            inventoryServiceProperties.put("salListenerName", "networkMapper");
 
-            c.setInterface(new String[] { IInventoryListener.class.getName(),
-                    IListenDataPacket.class.getName() },
+            /* List the interfaces we're going to implement */
+            c.setInterface(
+                    new String[] { IInventoryListener.class.getName(),
+                            IListenDataPacket.class.getName(),
+                            IListenTopoUpdates.class.getName() },
                     inventoryServiceProperties);
 
             /*
@@ -49,14 +50,11 @@ public class Activator extends ComponentActivatorAbstractBase {
              * this
              */
 
-            // Need the DataPacketService for encoding, decoding, sending data
-            // packets
             c.add(createContainerServiceDependency(containerName)
                     .setService(IDataPacketService.class)
                     .setCallbacks("setDataPacketService",
                             "unsetDataPacketService").setRequired(true));
 
-            // for accessing local container
             c.add(createContainerServiceDependency(containerName)
                     .setService(IContainer.class)
                     .setCallbacks("setIContainer", "unsetIContainer")

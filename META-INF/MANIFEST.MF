@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1403617053599
+Bnd-LastModified: 1403701473775
 Build-Jdk: 1.7.0_55
 Built-By: chris
 Bundle-Activator: org.opendaylight.controller.networkMap.Activator
@@ -10,14 +10,15 @@ Bundle-Version: 0.1.0
 Created-By: Apache Maven Bundle Plugin
 Export-Package: org.opendaylight.controller.networkMap;uses:="org.apache
  .felix.dm,org.opendaylight.controller.sal.core,org.opendaylight.control
- ler.sal.packet,org.opendaylight.controller.switchmanager";version="0.1.
- 0"
+ ler.sal.packet,org.opendaylight.controller.sal.topology,org.opendayligh
+ t.controller.switchmanager";version="0.1.0"
 Import-Package: org.apache.felix.dm;version="[3.0,4)",org.eclipse.osgi.f
  ramework.debug,org.opendaylight.controller.sal.action;version="[0.8,1)"
  ,org.opendaylight.controller.sal.core;version="[0.8,1)",org.opendayligh
  t.controller.sal.inventory;version="[0.8,1)",org.opendaylight.controlle
  r.sal.packet;version="[0.8,1)",org.opendaylight.controller.sal.reader;v
- ersion="[0.8,1)",org.opendaylight.controller.sal.utils;version="[0.8,1)
- ",org.opendaylight.controller.switchmanager;version="[0.7,1)",org.slf4j
- ;version="[1.7,2)"
+ ersion="[0.8,1)",org.opendaylight.controller.sal.topology;version="[0.8
+ ,1)",org.opendaylight.controller.sal.utils;version="[0.8,1)",org.openda
+ ylight.controller.switchmanager;version="[0.7,1)",org.slf4j;version="[1
+ .7,2)"
 Tool: Bnd-2.1.0.20130426-122213
